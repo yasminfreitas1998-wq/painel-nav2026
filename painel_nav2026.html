@@ -1,0 +1,1179 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Painel de Estudos — NAV Brasil 2026</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0f1117;
+    --bg2: #181c27;
+    --bg3: #1e2333;
+    --border: rgba(255,255,255,0.07);
+    --text: #f0f2f8;
+    --text2: #8892a4;
+    --text3: #555f72;
+    --accent: #6c63ff;
+    --accent2: #4ade80;
+    --accent3: #f59e0b;
+    --danger: #f87171;
+    --info: #38bdf8;
+    --radius: 10px;
+    --sidebar: 220px;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    display: flex;
+    min-height: 100vh;
+    font-size: 14px;
+  }
+
+  /* SIDEBAR */
+  .sidebar {
+    width: var(--sidebar);
+    background: var(--bg2);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 20px 0;
+    position: fixed;
+    top: 0; left: 0; bottom: 0;
+    z-index: 100;
+  }
+
+  .sidebar-logo {
+    padding: 0 20px 24px;
+    font-size: 18px;
+    font-weight: 700;
+    color: var(--accent);
+    letter-spacing: -0.5px;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 16px;
+  }
+  .sidebar-logo span { color: var(--text); }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 20px;
+    color: var(--text2);
+    font-size: 13px;
+    cursor: pointer;
+    border-left: 3px solid transparent;
+    transition: all 0.15s;
+    user-select: none;
+  }
+  .nav-item:hover { color: var(--text); background: rgba(255,255,255,0.03); }
+  .nav-item.active { color: var(--text); border-left-color: var(--accent); background: rgba(108,99,255,0.08); font-weight: 500; }
+  .nav-icon { font-size: 16px; width: 18px; text-align: center; }
+
+  .nav-section-label {
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: .08em;
+    color: var(--text3);
+    text-transform: uppercase;
+    padding: 16px 20px 6px;
+  }
+
+  .sidebar-bottom {
+    margin-top: auto;
+    padding: 16px 20px;
+    border-top: 1px solid var(--border);
+  }
+  .prova-countdown {
+    background: rgba(108,99,255,0.12);
+    border: 1px solid rgba(108,99,255,0.25);
+    border-radius: var(--radius);
+    padding: 12px;
+    text-align: center;
+  }
+  .prova-countdown .dias { font-size: 28px; font-weight: 700; color: var(--accent); }
+  .prova-countdown .label { font-size: 11px; color: var(--text2); margin-top: 2px; }
+
+  /* MAIN */
+  .main {
+    margin-left: var(--sidebar);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .topbar {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 14px 28px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 50;
+  }
+  .topbar-title { font-size: 16px; font-weight: 600; }
+  .topbar-right { display: flex; align-items: center; gap: 12px; }
+  .btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border: none;
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.15s;
+  }
+  .btn-primary:hover { opacity: 0.88; }
+  .btn-ghost {
+    background: transparent;
+    color: var(--text2);
+    border: 1px solid var(--border);
+    padding: 7px 14px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    cursor: pointer;
+  }
+  .btn-ghost:hover { color: var(--text); border-color: rgba(255,255,255,0.15); }
+
+  .content { padding: 24px 28px; }
+
+  /* METRIC CARDS */
+  .metrics-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+    margin-bottom: 24px;
+  }
+  .metric-card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 18px 20px;
+  }
+  .metric-card .mc-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .06em; margin-bottom: 8px; }
+  .metric-card .mc-value { font-size: 28px; font-weight: 700; color: var(--text); line-height: 1; }
+  .metric-card .mc-sub { font-size: 12px; color: var(--text2); margin-top: 5px; }
+  .mc-value .accent { color: var(--accent2); }
+  .mc-value .danger { color: var(--danger); }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1.4fr 1fr; gap: 16px; margin-bottom: 16px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+
+  /* CARD */
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+  .card-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--border);
+  }
+  .card-title { font-size: 13px; font-weight: 600; color: var(--text); }
+  .card-body { padding: 16px 18px; }
+
+  /* DISCIPLINAS TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead th {
+    text-align: left;
+    font-size: 11px;
+    font-weight: 500;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    padding: 0 10px 10px;
+  }
+  thead th:first-child { padding-left: 0; }
+  tbody tr { border-top: 1px solid var(--border); }
+  tbody tr:hover { background: rgba(255,255,255,0.02); }
+  tbody td { padding: 10px; color: var(--text); }
+  tbody td:first-child { padding-left: 0; }
+  .td-nome { font-weight: 500; }
+  .td-nome .area { font-size: 11px; color: var(--text2); font-weight: 400; display: block; margin-top: 1px; }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 8px;
+    border-radius: 20px;
+    letter-spacing: .03em;
+  }
+  .badge-verde { background: rgba(74,222,128,0.12); color: #4ade80; }
+  .badge-amarelo { background: rgba(245,158,11,0.12); color: #f59e0b; }
+  .badge-vermelho { background: rgba(248,113,113,0.12); color: #f87171; }
+  .badge-cinza { background: rgba(255,255,255,0.06); color: var(--text2); }
+  .badge-roxo { background: rgba(108,99,255,0.15); color: #a5a0ff; }
+
+  .acerto-bar { height: 4px; background: rgba(255,255,255,0.07); border-radius: 4px; width: 80px; overflow: hidden; margin-top: 4px; }
+  .acerto-fill { height: 100%; border-radius: 4px; background: var(--accent2); }
+
+  /* SELECT STATUS */
+  select.status-sel {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 11px;
+    padding: 3px 6px;
+    border-radius: 6px;
+    cursor: pointer;
+    outline: none;
+    font-family: inherit;
+  }
+
+  /* REVISOES */
+  .revisao-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid var(--border);
+    gap: 10px;
+  }
+  .revisao-item:last-child { border-bottom: none; }
+  .rev-tema { font-size: 13px; font-weight: 500; }
+  .rev-info { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .rev-actions { display: flex; gap: 6px; flex-shrink: 0; }
+  .icon-btn {
+    width: 28px; height: 28px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    color: var(--text2);
+    font-size: 13px;
+    cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: all 0.15s;
+  }
+  .icon-btn:hover { background: var(--border); color: var(--text); }
+
+  /* FREQUENCIA */
+  .freq-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 0;
+    border-bottom: 1px solid var(--border);
+    font-size: 12px;
+  }
+  .freq-item:last-child { border-bottom: none; }
+  .freq-nome { flex: 1; color: var(--text); }
+  .freq-count { font-weight: 600; color: var(--accent); width: 28px; text-align: right; flex-shrink: 0; }
+  .freq-bar { flex: 0 0 80px; height: 4px; background: rgba(255,255,255,0.07); border-radius: 4px; overflow: hidden; }
+  .freq-fill { height: 100%; border-radius: 4px; background: var(--accent); }
+
+  /* PLANEJAMENTO */
+  .plan-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 12px;
+    border-radius: 8px;
+    margin-bottom: 6px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+  }
+  .plan-cor { width: 4px; height: 36px; border-radius: 2px; flex-shrink: 0; }
+  .plan-nome { font-size: 13px; font-weight: 500; flex: 1; }
+  .plan-tempo { font-size: 12px; color: var(--text2); flex-shrink: 0; }
+  .plan-check {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+    font-size: 11px;
+    flex-shrink: 0;
+    transition: all 0.15s;
+  }
+  .plan-check.done { background: var(--accent2); border-color: var(--accent2); color: #000; }
+
+  /* MODAL */
+  .overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+  }
+  .overlay.open { display: flex; }
+  .modal {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    width: 420px;
+    max-width: 95vw;
+  }
+  .modal h3 { font-size: 16px; font-weight: 600; margin-bottom: 18px; }
+  .form-group { margin-bottom: 14px; }
+  .form-group label { display: block; font-size: 12px; color: var(--text2); margin-bottom: 6px; }
+  .form-group input, .form-group select, .form-group textarea {
+    width: 100%;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    padding: 9px 12px;
+    border-radius: 8px;
+    font-family: inherit;
+    outline: none;
+  }
+  .form-group input:focus, .form-group select:focus { border-color: rgba(108,99,255,0.5); }
+  .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+  .btn-secondary {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    color: var(--text2);
+    padding: 8px 16px;
+    border-radius: var(--radius);
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* CONSTANCIA */
+  .dias-grid { display: flex; flex-wrap: wrap; gap: 5px; }
+  .dia-dot {
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    font-size: 9px;
+    font-weight: 600;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer;
+  }
+  .dia-dot.feito { background: var(--accent2); color: #000; }
+  .dia-dot.faltou { background: rgba(248,113,113,0.15); color: var(--danger); }
+  .dia-dot.hoje { background: var(--accent); color: #fff; }
+  .dia-dot.futuro { background: rgba(255,255,255,0.04); color: var(--text3); }
+
+  /* CHART */
+  .chart-wrap { position: relative; height: 180px; }
+
+  /* TOAST */
+  .toast {
+    position: fixed;
+    bottom: 24px; right: 24px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 12px 18px;
+    font-size: 13px;
+    color: var(--text);
+    z-index: 999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    pointer-events: none;
+  }
+  .toast.show { transform: translateY(0); opacity: 1; }
+  .toast.success { border-left: 3px solid var(--accent2); }
+
+  /* SCROLLBAR */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">nav<span>study</span></div>
+
+  <div class="nav-section-label">Principal</div>
+  <div class="nav-item active" onclick="setPage('home', this)">
+    <span class="nav-icon">🏠</span> Home
+  </div>
+  <div class="nav-item" onclick="setPage('disciplinas', this)">
+    <span class="nav-icon">📚</span> Disciplinas
+  </div>
+  <div class="nav-item" onclick="setPage('questoes', this)">
+    <span class="nav-icon">✏️</span> Questões
+  </div>
+  <div class="nav-item" onclick="setPage('revisoes', this)">
+    <span class="nav-icon">🔁</span> Revisões
+  </div>
+
+  <div class="nav-section-label">Análise</div>
+  <div class="nav-item" onclick="setPage('frequencia', this)">
+    <span class="nav-icon">📊</span> Frequência FGV
+  </div>
+  <div class="nav-item" onclick="setPage('planejamento', this)">
+    <span class="nav-icon">🗓️</span> Planejamento
+  </div>
+
+  <div class="sidebar-bottom">
+    <div class="prova-countdown">
+      <div class="dias" id="dias-count">—</div>
+      <div class="label">dias para o NAV 2026</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="page-title">Home</div>
+    <div class="topbar-right">
+      <button class="btn-ghost" onclick="openModal('questao')">+ Questão</button>
+      <button class="btn-primary" onclick="openModal('estudar')">▶ Estudar agora</button>
+    </div>
+  </div>
+
+  <div class="content">
+
+    <!-- HOME -->
+    <div id="page-home" class="page">
+      <div class="metrics-row">
+        <div class="metric-card">
+          <div class="mc-label">Questões feitas</div>
+          <div class="mc-value" id="m-total">0</div>
+          <div class="mc-sub" id="m-acerto-sub">0 acertos · 0 erros</div>
+        </div>
+        <div class="metric-card">
+          <div class="mc-label">Taxa de acerto</div>
+          <div class="mc-value"><span class="accent" id="m-taxa">0%</span></div>
+          <div class="mc-sub">geral acumulado</div>
+        </div>
+        <div class="metric-card">
+          <div class="mc-label">Temas vistos</div>
+          <div class="mc-value" id="m-temas">0<span style="font-size:16px;color:var(--text2)">/18</span></div>
+          <div class="mc-sub" id="m-dominados">0 dominados</div>
+        </div>
+        <div class="metric-card">
+          <div class="mc-label">Para revisar</div>
+          <div class="mc-value"><span class="danger" id="m-revisao">0</span></div>
+          <div class="mc-sub">questões marcadas</div>
+        </div>
+      </div>
+
+      <div class="grid-2">
+        <!-- DESEMPENHO SEMANAL -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Desempenho semanal</span>
+            <span style="font-size:11px;color:var(--text2)">últimas 4 semanas</span>
+          </div>
+          <div class="card-body">
+            <div class="chart-wrap">
+              <canvas id="chart-semana"></canvas>
+            </div>
+          </div>
+        </div>
+
+        <!-- CONSTANCIA -->
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Constância</span>
+            <span style="font-size:11px;color:var(--text2)" id="streak-label">0 dias seguidos</span>
+          </div>
+          <div class="card-body">
+            <div class="dias-grid" id="dias-grid"></div>
+            <div style="margin-top:14px;font-size:12px;color:var(--text2)">Clique no dia de hoje para marcar como estudado.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TABELA DISCIPLINAS RESUMO -->
+      <div class="card" style="margin-bottom:16px">
+        <div class="card-header">
+          <span class="card-title">Painel de disciplinas</span>
+          <button class="btn-ghost" onclick="setPage('disciplinas', document.querySelectorAll('.nav-item')[1])" style="font-size:12px;padding:5px 12px">Ver tudo</button>
+        </div>
+        <div class="card-body" style="padding-top:8px">
+          <table>
+            <thead>
+              <tr>
+                <th>Tema</th>
+                <th style="text-align:center">Qtd.</th>
+                <th style="text-align:center">✓</th>
+                <th style="text-align:center">✗</th>
+                <th>Acerto</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-home"></tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- DISCIPLINAS -->
+    <div id="page-disciplinas" class="page" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Todos os temas do edital</span>
+          <span style="font-size:12px;color:var(--text2)">NAV Brasil 2026 · Analista Comunicação Social e Marketing</span>
+        </div>
+        <div class="card-body" style="padding-top:8px">
+          <table>
+            <thead>
+              <tr>
+                <th>Tema</th>
+                <th style="text-align:center">Qtd.</th>
+                <th style="text-align:center">✓</th>
+                <th style="text-align:center">✗</th>
+                <th>% acerto</th>
+                <th>Incidência FGV</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="tabela-disc"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- QUESTOES -->
+    <div id="page-questoes" class="page" style="display:none">
+      <div class="card">
+        <div class="card-header">
+          <span class="card-title">Histórico de questões</span>
+          <button class="btn-primary" onclick="openModal('questao')" style="font-size:12px;padding:6px 14px">+ Registrar</button>
+        </div>
+        <div class="card-body" style="padding-top:8px">
+          <table>
+            <thead>
+              <tr>
+                <th>Tema</th>
+                <th>Fonte / Prova</th>
+                <th style="text-align:center">Resultado</th>
+                <th style="text-align:center">Data</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="tabela-questoes"></tbody>
+          </table>
+          <div id="empty-questoes" style="text-align:center;padding:32px;color:var(--text2);font-size:13px">Nenhuma questão registrada ainda. Clique em "+ Registrar" para começar.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REVISOES -->
+    <div id="page-revisoes" class="page" style="display:none">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header"><span class="card-title">Fila de revisão</span></div>
+          <div class="card-body">
+            <div id="lista-revisao"><div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">Nenhuma questão para revisar. 🎉</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Temas com mais erros</span></div>
+          <div class="card-body">
+            <div id="lista-erros"><div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">Sem dados ainda.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FREQUENCIA -->
+    <div id="page-frequencia" class="page" style="display:none">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Incidência por tema — FGV</span>
+            <span style="font-size:11px;color:var(--text2)">provas analistas 2019–2024</span>
+          </div>
+          <div class="card-body" id="freq-lista"></div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Distribuição por área</span></div>
+          <div class="card-body">
+            <div class="chart-wrap"><canvas id="chart-freq"></canvas></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLANEJAMENTO -->
+    <div id="page-planejamento" class="page" style="display:none">
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-header">
+            <span class="card-title">Planejamento do dia</span>
+            <button class="btn-ghost" onclick="openModal('plano')" style="font-size:12px;padding:5px 12px">+ Adicionar</button>
+          </div>
+          <div class="card-body">
+            <div id="lista-plano"><div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">Nenhum item planejado para hoje.</div></div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-header"><span class="card-title">Últimas atividades</span></div>
+          <div class="card-body">
+            <div id="lista-atividades"><div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">Nenhuma atividade registrada.</div></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAIS -->
+<div class="overlay" id="overlay-questao">
+  <div class="modal">
+    <h3>Registrar questão</h3>
+    <div class="form-group">
+      <label>Tema</label>
+      <select id="f-tema"></select>
+    </div>
+    <div class="form-group">
+      <label>Fonte / Prova</label>
+      <input type="text" id="f-prova" placeholder="ex: FGV 2023 — SEPLAG RJ">
+    </div>
+    <div class="form-group">
+      <label>Resultado</label>
+      <select id="f-resultado">
+        <option value="acerto">✓ Acertei</option>
+        <option value="erro">✗ Errei</option>
+        <option value="revisao">🔁 Marcar para revisar</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>Observação (opcional)</label>
+      <textarea id="f-obs" rows="2" placeholder="Dificuldade, dúvida, ponto de atenção..."></textarea>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('questao')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarQuestao()">Salvar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-plano">
+  <div class="modal">
+    <h3>Adicionar ao planejamento</h3>
+    <div class="form-group">
+      <label>Tema</label>
+      <select id="fp-tema"></select>
+    </div>
+    <div class="form-group">
+      <label>Meta de tempo</label>
+      <select id="fp-tempo">
+        <option>30min</option>
+        <option>1h</option>
+        <option selected>1h30min</option>
+        <option>2h</option>
+        <option>3h</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('plano')">Cancelar</button>
+      <button class="btn-primary" onclick="salvarPlano()">Adicionar</button>
+    </div>
+  </div>
+</div>
+
+<div class="overlay" id="overlay-estudar">
+  <div class="modal">
+    <h3>O que você vai estudar agora?</h3>
+    <div class="form-group">
+      <label>Tema</label>
+      <select id="fe-tema"></select>
+    </div>
+    <div class="form-group">
+      <label>Tipo de atividade</label>
+      <select id="fe-tipo">
+        <option>Leitura / teoria</option>
+        <option>Questões</option>
+        <option>Revisão de anotações</option>
+        <option>Resolução de prova completa</option>
+      </select>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-secondary" onclick="closeModal('estudar')">Cancelar</button>
+      <button class="btn-primary" onclick="registrarAtividade()">Registrar início</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+const TEMAS = [
+  { id:1, area:"Língua Portuguesa", nome:"Interpretação de texto", freq:11, cor:"#6c63ff" },
+  { id:2, area:"Língua Portuguesa", nome:"Gramática e ortografia", freq:8, cor:"#6c63ff" },
+  { id:3, area:"Língua Portuguesa", nome:"Coerência e coesão textual", freq:4, cor:"#6c63ff" },
+  { id:4, area:"Língua Portuguesa", nome:"Tipologia e gêneros textuais", freq:3, cor:"#6c63ff" },
+  { id:5, area:"Raciocínio Lógico", nome:"Proposições e conectivos", freq:12, cor:"#38bdf8" },
+  { id:6, area:"Raciocínio Lógico", nome:"Tabelas de verdade e equivalência", freq:7, cor:"#38bdf8" },
+  { id:7, area:"Raciocínio Lógico", nome:"Argumentação e inferência", freq:5, cor:"#38bdf8" },
+  { id:8, area:"Raciocínio Lógico", nome:"Quantificadores e conjuntos", freq:3, cor:"#38bdf8" },
+  { id:9, area:"Administração Pública", nome:"Princípios da administração pública", freq:10, cor:"#f59e0b" },
+  { id:10, area:"Administração Pública", nome:"Agentes e poderes administrativos", freq:5, cor:"#f59e0b" },
+  { id:11, area:"Comunicação", nome:"Comunicação organizacional", freq:9, cor:"#4ade80" },
+  { id:12, area:"Comunicação", nome:"Assessoria de imprensa e relações públicas", freq:7, cor:"#4ade80" },
+  { id:13, area:"Comunicação", nome:"Marketing e branding", freq:8, cor:"#4ade80" },
+  { id:14, area:"Comunicação", nome:"Comunicação digital e redes sociais", freq:6, cor:"#4ade80" },
+  { id:15, area:"Comunicação", nome:"Planejamento de comunicação", freq:4, cor:"#4ade80" },
+  { id:16, area:"Aviação Civil", nome:"Estrutura e regulação do setor aéreo", freq:4, cor:"#f87171" },
+  { id:17, area:"Aviação Civil", nome:"Papel da NAV Brasil / DECEA", freq:6, cor:"#f87171" },
+  { id:18, area:"Atualidades", nome:"Conjuntura nacional e internacional", freq:4, cor:"#a78bfa" },
+];
+
+const FREQ_DATA = [
+  { tema:"Proposições e conectivos", vezes:12 },
+  { tema:"Interpretação de texto", vezes:11 },
+  { tema:"Princípios da adm. pública", vezes:10 },
+  { tema:"Comunicação organizacional", vezes:9 },
+  { tema:"Marketing e branding", vezes:8 },
+  { tema:"Gramática e ortografia", vezes:8 },
+  { tema:"Tabelas de verdade", vezes:7 },
+  { tema:"Assessoria de imprensa", vezes:7 },
+  { tema:"Papel da NAV / DECEA", vezes:6 },
+  { tema:"Comunicação digital", vezes:6 },
+  { tema:"Argumentação e inferência", vezes:5 },
+  { tema:"Agentes administrativos", vezes:5 },
+  { tema:"Coerência e coesão", vezes:4 },
+  { tema:"Planejamento de comunicação", vezes:4 },
+  { tema:"Setor aéreo", vezes:4 },
+  { tema:"Atualidades", vezes:4 },
+];
+
+const CORES_AREA = {
+  "Língua Portuguesa": "#6c63ff",
+  "Raciocínio Lógico": "#38bdf8",
+  "Administração Pública": "#f59e0b",
+  "Comunicação": "#4ade80",
+  "Aviação Civil": "#f87171",
+  "Atualidades": "#a78bfa"
+};
+
+let data = JSON.parse(localStorage.getItem('nav26') || '{"status":{},"questoes":[],"constancia":[],"plano":[],"atividades":[]}');
+
+function save() { localStorage.setItem('nav26', JSON.stringify(data)); }
+
+function getT(id) { return TEMAS.find(t => t.id == id); }
+function getSt(id) { return data.status[id] || 'nao_visto'; }
+function setSt(id, v) { data.status[id] = v; save(); renderAll(); }
+
+function questoesTema(id) { return data.questoes.filter(q => q.temaId == id); }
+function acertosPct(id) {
+  const qs = questoesTema(id);
+  if (!qs.length) return null;
+  return Math.round(qs.filter(q => q.resultado === 'acerto').length / qs.length * 100);
+}
+
+function stBadge(s) {
+  const map = {
+    dominado: ['badge-verde', 'dominado'],
+    em_progresso: ['badge-roxo', 'em progresso'],
+    fraco: ['badge-vermelho', 'preciso focar'],
+    nao_visto: ['badge-cinza', 'não visto']
+  };
+  const [cls, label] = map[s] || map.nao_visto;
+  return `<span class="badge ${cls}">${label}</span>`;
+}
+
+function freqBadge(f) {
+  if (f >= 9) return `<span class="badge badge-vermelho">alta</span>`;
+  if (f >= 5) return `<span class="badge badge-amarelo">média</span>`;
+  return `<span class="badge badge-cinza">baixa</span>`;
+}
+
+function stSelect(id) {
+  const s = getSt(id);
+  return `<select class="status-sel" onchange="setSt(${id},this.value)">
+    <option value="nao_visto" ${s==='nao_visto'?'selected':''}>Não visto</option>
+    <option value="em_progresso" ${s==='em_progresso'?'selected':''}>Em progresso</option>
+    <option value="fraco" ${s==='fraco'?'selected':''}>Preciso focar</option>
+    <option value="dominado" ${s==='dominado'?'selected':''}>Dominado</option>
+  </select>`;
+}
+
+function renderMetrics() {
+  const total = data.questoes.length;
+  const acertos = data.questoes.filter(q=>q.resultado==='acerto').length;
+  const erros = data.questoes.filter(q=>q.resultado==='erro').length;
+  const taxa = total ? Math.round(acertos/total*100) : 0;
+  const vistos = TEMAS.filter(t=>getSt(t.id)!=='nao_visto').length;
+  const dominados = TEMAS.filter(t=>getSt(t.id)==='dominado').length;
+  const rev = data.questoes.filter(q=>q.resultado==='revisao').length;
+  document.getElementById('m-total').textContent = total;
+  document.getElementById('m-acerto-sub').textContent = `${acertos} acertos · ${erros} erros`;
+  document.getElementById('m-taxa').textContent = taxa + '%';
+  document.getElementById('m-temas').innerHTML = `${vistos}<span style="font-size:16px;color:var(--text2)">/18</span>`;
+  document.getElementById('m-dominados').textContent = `${dominados} dominados`;
+  document.getElementById('m-revisao').textContent = rev;
+}
+
+function renderTabelaHome() {
+  const sorted = [...TEMAS].sort((a,b) => {
+    const qa = questoesTema(a.id).length, qb = questoesTema(b.id).length;
+    return qb - qa;
+  }).slice(0, 8);
+  document.getElementById('tabela-home').innerHTML = sorted.map(t => {
+    const qs = questoesTema(t.id);
+    const ac = qs.filter(q=>q.resultado==='acerto').length;
+    const er = qs.filter(q=>q.resultado==='erro').length;
+    const pct = qs.length ? Math.round(ac/qs.length*100) : null;
+    return `<tr>
+      <td><div class="td-nome">${t.nome}<span class="area">${t.area}</span></div></td>
+      <td style="text-align:center;color:var(--text2)">${qs.length}</td>
+      <td style="text-align:center;color:#4ade80;font-weight:600">${ac}</td>
+      <td style="text-align:center;color:#f87171;font-weight:600">${er}</td>
+      <td>
+        ${pct !== null ? `<div style="font-size:12px;font-weight:600;color:${pct>=70?'#4ade80':pct>=50?'#f59e0b':'#f87171'}">${pct}%</div><div class="acerto-bar"><div class="acerto-fill" style="width:${pct}%;background:${pct>=70?'#4ade80':pct>=50?'#f59e0b':'#f87171'}"></div></div>` : '<span style="color:var(--text3);font-size:12px">—</span>'}
+      </td>
+      <td>${stBadge(getSt(t.id))}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderTabelaDisc() {
+  const areas = [...new Set(TEMAS.map(t=>t.area))];
+  let html = '';
+  areas.forEach(area => {
+    html += `<tr><td colspan="7" style="padding:14px 0 4px;font-size:11px;font-weight:600;color:var(--text3);letter-spacing:.06em;text-transform:uppercase;border:none">${area}</td></tr>`;
+    TEMAS.filter(t=>t.area===area).forEach(t => {
+      const qs = questoesTema(t.id);
+      const ac = qs.filter(q=>q.resultado==='acerto').length;
+      const er = qs.filter(q=>q.resultado==='erro').length;
+      const pct = qs.length ? Math.round(ac/qs.length*100) : null;
+      html += `<tr>
+        <td><div class="td-nome">${t.nome}</div></td>
+        <td style="text-align:center;color:var(--text2)">${qs.length}</td>
+        <td style="text-align:center;color:#4ade80;font-weight:600">${ac}</td>
+        <td style="text-align:center;color:#f87171;font-weight:600">${er}</td>
+        <td>${pct !== null ? `<div style="font-size:12px;font-weight:600;color:${pct>=70?'#4ade80':pct>=50?'#f59e0b':'#f87171'}">${pct}%</div><div class="acerto-bar"><div class="acerto-fill" style="width:${pct}%;background:${pct>=70?'#4ade80':pct>=50?'#f59e0b':'#f87171'}"></div></div>` : '<span style="color:var(--text3);font-size:12px">—</span>'}</td>
+        <td>${freqBadge(t.freq)}</td>
+        <td>${stSelect(t.id)}</td>
+      </tr>`;
+    });
+  });
+  document.getElementById('tabela-disc').innerHTML = html;
+}
+
+function renderTabelaQuestoes() {
+  const qs = [...data.questoes].reverse();
+  const el = document.getElementById('tabela-questoes');
+  const empty = document.getElementById('empty-questoes');
+  if (!qs.length) { el.innerHTML = ''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+  el.innerHTML = qs.map((q, ri) => {
+    const t = getT(q.temaId);
+    const realIdx = data.questoes.length - 1 - ri;
+    const rbadge = q.resultado === 'acerto'
+      ? '<span class="badge badge-verde">✓ acerto</span>'
+      : q.resultado === 'erro'
+      ? '<span class="badge badge-vermelho">✗ erro</span>'
+      : '<span class="badge badge-amarelo">🔁 revisar</span>';
+    return `<tr>
+      <td><div class="td-nome">${t ? t.nome : '—'}<span class="area">${t ? t.area : ''}</span></div></td>
+      <td style="color:var(--text2);font-size:12px">${q.prova || '—'}</td>
+      <td style="text-align:center">${rbadge}</td>
+      <td style="text-align:center;color:var(--text2);font-size:12px">${q.data}</td>
+      <td><button onclick="remover(${realIdx})" style="background:none;border:none;color:var(--text3);cursor:pointer;font-size:14px" title="Remover">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function renderRevisoes() {
+  const rev = data.questoes.filter(q=>q.resultado==='revisao'||q.resultado==='erro');
+  const byTema = {};
+  rev.forEach(q => {
+    if (!byTema[q.temaId]) byTema[q.temaId] = {erros:0, revisao:0};
+    if (q.resultado==='erro') byTema[q.temaId].erros++;
+    if (q.resultado==='revisao') byTema[q.temaId].revisao++;
+  });
+
+  const lista = document.getElementById('lista-revisao');
+  const errosList = document.getElementById('lista-erros');
+
+  if (!Object.keys(byTema).length) {
+    lista.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">Nenhuma questão para revisar. 🎉</div>';
+    errosList.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">Sem dados ainda.</div>';
+    return;
+  }
+
+  lista.innerHTML = Object.entries(byTema).map(([id, d]) => {
+    const t = getT(id);
+    return `<div class="revisao-item">
+      <div>
+        <div class="rev-tema">${t ? t.nome : '—'}</div>
+        <div class="rev-info">${d.erros} erro(s) · ${d.revisao} para revisar</div>
+      </div>
+      <div class="rev-actions">
+        <span class="badge badge-vermelho">${d.erros + d.revisao}</span>
+      </div>
+    </div>`;
+  }).join('');
+
+  const sorted = Object.entries(byTema).sort((a,b)=>(b[1].erros+b[1].revisao)-(a[1].erros+a[1].revisao));
+  errosList.innerHTML = sorted.map(([id, d]) => {
+    const t = getT(id);
+    const total = d.erros + d.revisao;
+    const max = sorted[0][1].erros + sorted[0][1].revisao;
+    return `<div class="freq-item">
+      <div class="freq-nome">${t ? t.nome : '—'}</div>
+      <div class="freq-count" style="color:#f87171">${total}</div>
+      <div class="freq-bar"><div class="freq-fill" style="width:${Math.round(total/max*100)}%;background:#f87171"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderFrequencia() {
+  const max = FREQ_DATA[0].vezes;
+  document.getElementById('freq-lista').innerHTML = FREQ_DATA.map(f => `
+    <div class="freq-item">
+      <div class="freq-nome">${f.tema}</div>
+      <div class="freq-count">${f.vezes}x</div>
+      <div class="freq-bar"><div class="freq-fill" style="width:${Math.round(f.vezes/max*100)}%"></div></div>
+    </div>
+  `).join('');
+}
+
+function renderPlanejamento() {
+  const CORES = ['#6c63ff','#38bdf8','#f59e0b','#4ade80','#f87171','#a78bfa'];
+  const lista = document.getElementById('lista-plano');
+  if (!data.plano.length) {
+    lista.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">Nenhum item planejado para hoje.</div>';
+  } else {
+    lista.innerHTML = data.plano.map((p,i) => {
+      const t = getT(p.temaId);
+      return `<div class="plan-item">
+        <div class="plan-cor" style="background:${CORES[i%CORES.length]}"></div>
+        <div style="flex:1"><div class="plan-nome">${t ? t.nome : '—'}</div><div style="font-size:11px;color:var(--text2);margin-top:2px">${t ? t.area : ''}</div></div>
+        <div class="plan-tempo">${p.tempo}</div>
+        <div class="plan-check ${p.done?'done':''}" onclick="togglePlano(${i})">${p.done?'✓':''}</div>
+      </div>`;
+    }).join('');
+  }
+
+  const ativ = document.getElementById('lista-atividades');
+  if (!data.atividades.length) {
+    ativ.innerHTML = '<div style="text-align:center;padding:24px;color:var(--text2);font-size:13px">Nenhuma atividade registrada.</div>';
+  } else {
+    ativ.innerHTML = [...data.atividades].reverse().slice(0,6).map(a => {
+      const t = getT(a.temaId);
+      return `<div class="revisao-item">
+        <div>
+          <div class="rev-tema">${t ? t.nome : '—'}</div>
+          <div class="rev-info">${a.tipo} · ${a.data}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+}
+
+function renderConstancia() {
+  const hoje = new Date();
+  const grid = document.getElementById('dias-grid');
+  const hojeStr = hoje.toISOString().slice(0,10);
+  let html = '';
+  let streak = 0;
+  for (let i = 29; i >= 0; i--) {
+    const d = new Date(hoje); d.setDate(hoje.getDate()-i);
+    const s = d.toISOString().slice(0,10);
+    const dia = d.getDate();
+    if (s === hojeStr) {
+      const feito = data.constancia.includes(s);
+      html += `<div class="dia-dot hoje" onclick="toggleDia('${s}')" title="Hoje" style="${feito?'background:#4ade80;color:#000':''}">${feito?'✓':dia}</div>`;
+    } else if (data.constancia.includes(s)) {
+      html += `<div class="dia-dot feito" title="${s}">✓</div>`;
+      if (i === 0 || (data.constancia.includes(new Date(hoje.getTime()-i*86400000+86400000).toISOString().slice(0,10)))) streak++;
+    } else if (s < hojeStr) {
+      html += `<div class="dia-dot faltou" title="${s}">${dia}</div>`;
+    } else {
+      html += `<div class="dia-dot futuro">${dia}</div>`;
+    }
+  }
+
+  const consec = calcStreak();
+  document.getElementById('streak-label').textContent = `${consec} dia(s) seguido(s)`;
+  grid.innerHTML = html;
+}
+
+function calcStreak() {
+  let count = 0;
+  const hoje = new Date();
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(hoje); d.setDate(hoje.getDate()-i);
+    const s = d.toISOString().slice(0,10);
+    if (data.constancia.includes(s)) count++;
+    else break;
+  }
+  return count;
+}
+
+function toggleDia(s) {
+  const idx = data.constancia.indexOf(s);
+  if (idx >= 0) data.constancia.splice(idx,1);
+  else data.constancia.push(s);
+  save(); renderConstancia();
+}
+
+function renderCharts() {
+  const semanas = ['Sem 1','Sem 2','Sem 3','Sem 4'];
+  const ctx = document.getElementById('chart-semana');
+  if (ctx._chart) ctx._chart.destroy();
+  ctx._chart = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels: semanas,
+      datasets: [
+        { label:'Acertos', data: calcSemanas('acerto'), backgroundColor:'rgba(74,222,128,0.7)', borderRadius:5 },
+        { label:'Erros', data: calcSemanas('erro'), backgroundColor:'rgba(248,113,113,0.5)', borderRadius:5 }
+      ]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend:{ labels:{ color:'#8892a4', font:{size:11} } } },
+      scales: {
+        x: { ticks:{color:'#8892a4'}, grid:{color:'rgba(255,255,255,0.04)'} },
+        y: { ticks:{color:'#8892a4'}, grid:{color:'rgba(255,255,255,0.04)'}, beginAtZero:true }
+      }
+    }
+  });
+
+  const ctx2 = document.getElementById('chart-freq');
+  if (ctx2 && ctx2._chart) ctx2._chart.destroy();
+  if (ctx2) {
+    const areas = [...new Set(TEMAS.map(t=>t.area))];
+    const totais = areas.map(a => TEMAS.filter(t=>t.area===a).reduce((s,t)=>s+t.freq,0));
+    ctx2._chart = new Chart(ctx2, {
+      type: 'doughnut',
+      data: {
+        labels: areas,
+        datasets: [{ data: totais, backgroundColor: areas.map(a=>CORES_AREA[a]||'#888'), borderWidth:0 }]
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend:{ position:'right', labels:{ color:'#8892a4', font:{size:11}, boxWidth:12 } } }
+      }
+    });
+  }
+}
+
+function calcSemanas(tipo) {
+  const hoje = new Date();
+  return [3,2,1,0].map(w => {
+    const start = new Date(hoje); start.setDate(hoje.getDate()-7*(w+1));
+    const end = new Date(hoje); end.setDate(hoje.getDate()-7*w);
+    return data.questoes.filter(q => {
+      if (q.resultado !== tipo) return false;
+      const parts = q.data.split('/');
+      const d = new Date(2025, parseInt(parts[1])-1, parseInt(parts[0]));
+      return d >= start && d < end;
+    }).length;
+  });
+}
+
+function calcDiasProva() {
+  const prova = new Date('2026-09-01');
+  const hoje = new Date();
+  const diff = Math.ceil((prova-hoje)/(1000*60*60*24));
+  document.getElementById('dias-count').textContent = diff > 0 ? diff : '—';
+}
+
+// MODAIS
+function openModal(tipo) {
+  const selTema = document.getElementById('f-tema');
+  const selFp = document.getElementById('fp-tema');
+  const selFe = document.getElementById('fe-tema');
+  const opts = TEMAS.map(t=>`<option value="${t.id}">${t.area} — ${t.nome}</option>`).join('');
+  if (selTema) selTema.innerHTML = opts;
+  if (selFp) selFp.innerHTML = opts;
+  if (selFe) selFe.innerHTML = opts;
+  document.getElementById('overlay-'+tipo).classList.add('open');
+}
+function closeModal(tipo) {
+  document.getElementById('overlay-'+tipo).classList.remove('open');
+}
+
+function salvarQuestao() {
+  const temaId = parseInt(document.getElementById('f-tema').value);
+  const prova = document.getElementById('f-prova').value.trim();
+  const resultado = document.getElementById('f-resultado').value;
+  const obs = document.getElementById('f-obs').value.trim();
+  const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  data.questoes.push({ temaId, prova, resultado, obs, data: hoje });
+  if (resultado !== 'acerto' && getSt(temaId) === 'nao_visto') data.status[temaId] = 'fraco';
+  save();
+  closeModal('questao');
+  toast('Questão registrada com sucesso!');
+  renderAll();
+}
+
+function salvarPlano() {
+  const temaId = parseInt(document.getElementById('fp-tema').value);
+  const tempo = document.getElementById('fp-tempo').value;
+  data.plano.push({ temaId, tempo, done:false });
+  save(); closeModal('plano'); renderPlanejamento();
+}
+
+function registrarAtividade() {
+  const temaId = parseInt(document.getElementById('fe-tema').value);
+  const tipo = document.getElementById('fe-tipo').value;
+  const hoje = new Date().toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'});
+  data.atividades.push({ temaId, tipo, data: hoje });
+  if (!data.constancia.includes(new Date().toISOString().slice(0,10))) {
+    data.constancia.push(new Date().toISOString().slice(0,10));
+  }
+  save(); closeModal('estudar'); toast('Atividade registrada! ✓'); renderAll();
+}
+
+function togglePlano(i) {
+  data.plano[i].done = !data.plano[i].done;
+  save(); renderPlanejamento();
+}
+
+function remover(i) {
+  data.questoes.splice(i,1);
+  save(); renderAll(); toast('Questão removida.');
+}
+
+function toast(msg, tipo='success') {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.className = 'toast '+tipo;
+  setTimeout(()=>el.classList.add('show'),10);
+  setTimeout(()=>el.classList.remove('show'),2500);
+}
+
+function setPage(id, el) {
+  document.querySelectorAll('.page').forEach(p=>p.style.display='none');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  document.getElementById('page-'+id).style.display='block';
+  document.getElementById('page-title').textContent = el.textContent.trim();
+  el.classList.add('active');
+  if (id==='frequencia') setTimeout(renderCharts, 50);
+}
+
+function renderAll() {
+  renderMetrics();
+  renderTabelaHome();
+  renderTabelaDisc();
+  renderTabelaQuestoes();
+  renderRevisoes();
+  renderFrequencia();
+  renderPlanejamento();
+  renderConstancia();
+  renderCharts();
+}
+
+document.querySelectorAll('.overlay').forEach(o => {
+  o.addEventListener('click', e => { if (e.target === o) o.classList.remove('open'); });
+});
+
+calcDiasProva();
+renderAll();
+</script>
+</body>
+</html>
